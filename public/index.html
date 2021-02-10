@@ -1,0 +1,141 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ITSM finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- CSS only -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <style>
+
+        body {
+            background-color: #ffffff;
+            margin: auto;
+            width: 95%;
+            padding: 10px;
+            font-family: sans-serif;
+            font-size: 15px;
+        }
+
+        .loading {
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .section {
+            font-size: 20px;
+            font-family: sans-serif;
+          }
+    
+    </style>
+</head>
+
+<body>
+    <br>
+    <img src="https://www.hmm21.com/cms/company/engn/download/HMM%20Logo_Basic%20Form.png" style="width:120px;">
+    <br><br> 
+    <img>
+        <h3><img src="images/search.png" style="width:30px; height:30px; margin-top:-5px;"> ITSM finder</h3>
+        You can search for the similar issue first before you raise it into ITSM right away in order to find the solution promptly.
+    <br><br>
+    <div class="main">
+        <div>
+            <input type="text" id="search" autocomplete="off" placeholder=" What is your issue?" style="height:35px; width:550px;" onkeypress="handle(event);">
+            <button type="button" id="goSearch" class="btn btn-outline-primary" style="margin-top:-5px;">Search</button>
+        </div>
+    </div>
+    <br>
+    <center>
+    <div class="loading" id="loadingmessage" style="display:none">
+        <img src='images/loading.gif'/>
+    </div>
+    </center>
+
+    <div class="head_section"></div>
+    <div class="section" style="overflow:auto;"></div>
+
+    <br>
+    <div class="footer">
+        <p>
+            2021 HMM(Europe) CO.,LTD. 
+            All Rights Reserved. 
+        </p>
+    </div>
+
+    <script>
+
+        var param = {};
+        var result = "";
+
+        function handle(e){
+            if(e.keyCode === 13){
+                search();
+            }
+        }
+
+        $("#goSearch").click(function(){
+            search();
+        });
+
+        function search(){
+
+            var search = document.getElementById('search').value;
+
+            if(search.trim().length<=5){
+                alert("Type more than 5 characters at least!!");
+                document.getElementById('search').focus();
+                return;
+            }
+
+            $(".section").html("");
+            $(".head_section").html("");
+
+            $('#loadingmessage').show();
+
+            param.search = search;
+
+            $.ajax({
+                url: '/similarity',
+                type: 'POST',
+                data: JSON.stringify(param),
+                contentType: 'application/json; charset=utf-8',
+                cache: false,
+                success: function (response) {
+
+                    result = JSON.parse(response);
+                    var innerText = "Sorry!! No results found. Please try searching again only with a few key words.";
+
+                    if(result!=="Nodata"){
+
+                        innerText = "<table class='table table-striped' style='font-size:13px; font-family:sans-serif;'><thead class='thead-light'><tr><th style='width: 120px; background-color:#120352; color:white; text-align:center;'>ITSM ref. #No<br><font color='red'>Similarity (%)</font></th><th style='width: 220px; background-color:#120352; color:white; text-align:center;'>The title of issue</th><th style='background-color:#120352; color:white; text-align:center;'>&nbsp;&nbsp;The details of issue&nbsp;&nbsp;</th><th style='background-color:#120352; color:white; text-align:center;'>HQ's Feedback</th></thead><tbody>";
+
+                        for(let i=0; i<result.length; i++){
+                            //innerText = innerText + "<tr><th><a href='javascript:popup_detail(\"" + result[i].itsm_ref + "\");'><u>" + result[i].itsm_ref + "</u></a></th><th>" + result[i].itsm_summary + "</th><th>" + result[i].itsm_description + "</th><th>" + result[i].itsm_status + "</th><th><a href='https://itsm.hmm21.com/jira/browse/" + result[i].itsm_ref + "' target='_blank'>View</a></th></tr>";
+                            innerText = innerText + "<tr><th style='text-align:center'>" + result[i].itsm_ref + "<br><font color='red'>( " + (parseFloat(result[i].similarity)*100).toFixed(2) + " % )</font>" + "</th><th style='text-align:center'>" + result[i].itsm_summary + "</th><th>" + result[i].itsm_description + "</th><th style='text-align:center'><a href='https://itsm.hmm21.com/jira/browse/" + result[i].itsm_ref + "' target='_blank'>View</a></th></tr>";
+                        }
+                        innerText = innerText + "</tbody></table>";  
+                    }
+
+                    $(".head_section").html("<p><u><font size='3' color='red'>If you didn’t find the proper results you want ??</u><a href='http://itsm.hmm21.com' target='_blank'> >> Go to ITSM</a></font></p>");
+                    $(".section").html(innerText);
+
+                },
+                error: function (response) {
+                    //var result = JSON.stringify(response);
+                },
+                complete: function (response) {
+                    $('#loadingmessage').hide();
+                }
+            });
+        }
+
+        function popup_detail(detail){
+            window.open('/show?id=' + detail, 'show', 'width=795, height=930, resizable=yes');
+        }
+
+    </script>
+
+</body>
+</html>

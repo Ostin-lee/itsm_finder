@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex, nofollow">
+    <title>ITSM finder</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+<body>
+
+    <div>
+
+        <table class='table table-striped' style='font-size:13px; font-family:arial;'>
+            <thead class='thead-light'>
+                <tr>
+                    <th style='background-color:#120352; color:white;'>ITSM ref. No</th>
+                <tr>
+                <tr>
+                    <th><span id="ref_id"></span></th>
+                </tr>
+                <tr>
+                    <th style='background-color:#120352; color:white;'>HQ's Comment(s)</th>
+                <tr>
+                <tr>
+                    <th><span id="feedback"></span></th>
+                </tr>
+                <tr>
+                    <th style='background-color:#120352; color:white;'>Attachment(s)</th>
+                <tr>
+                <tr>
+                    <th><span id="attached"></span></th>
+                </tr>
+            </thead>
+        <tbody>
+
+    </div>
+    
+    <script>
+   
+        var id = "<%= id %>";
+        var param = {};
+
+        document.getElementById('ref_id').innerHTML = id;
+
+        $(function() {
+
+            //window.document.body.scroll = "auto";
+
+            param.id = id;
+   
+            $.ajax({
+                type: 'POST',
+                url: '/feedback',
+                data: JSON.stringify(param),
+                contentType: 'application/json; charset=utf-8',
+                cache: false,
+                async: true,
+                success: function (response) {
+                    
+                    var jsonObject = JSON.parse(response);
+
+                    if(jsonObject==='Nodata'){
+                        document.getElementById('feedback').innerHTML = "No data";
+                    }
+                    else {
+                        for(let i=0;i<jsonObject.length;i++){
+                            var intext = intext + jsonObject[i].itsm_comments + " <hr> ";
+                        }
+                        //intext = intext.replace(":",": <br>");
+                        document.getElementById('feedback').innerHTML = intext;
+                    }
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '/attached',
+                        data: JSON.stringify(param),
+                        contentType: 'application/json; charset=utf-8',
+                        cache: false,
+                        async: true,
+                        success: function (response) {
+                            
+                            var jsonObject = JSON.parse(response);
+        
+                            if(jsonObject==='Nodata'){
+                                document.getElementById('attached').innerHTML = "No attached";
+                            }
+                            else {
+
+                                var inattached = "";
+
+                                for(let i=0;i<jsonObject.length;i++){
+
+                                    var remove_blank_text = jsonObject[i].itsm_attached.replace(/ /gi,'%20');
+
+                                    if(jsonObject[i].itsm_attached.toLowerCase().indexOf(".png")>-1 || jsonObject[i].itsm_attached.toLowerCase().indexOf(".jpg")>-1){
+                                        inattached = inattached + "<img src='https://itsm.hmm21.com/jira/secure/attachment/" + jsonObject[i].itsm_attached_id + "/" + remove_blank_text + "' style='width:200px; height:200px;'>";
+                                    } else {
+                                        inattached = inattached + "<a href='https://itsm.hmm21.com/jira/secure/attachment/" + jsonObject[i].itsm_attached_id + "/" + remove_blank_text + "'>" + jsonObject[i].itsm_attached + "</a>";
+                                    }
+                                    
+                                    inattached = inattached + "<hr>";
+                                }
+
+                                document.getElementById('attached').innerHTML = inattached;
+                            }
+                        },  
+                        error: function (response) {
+                        }, 
+                        complete: function (response) {
+                        }
+        
+                    });
+
+                },  
+                error: function (response) {
+                }, 
+                complete: function (response) {
+                }
+
+            });
+
+        });
+
+    </script>
+
+</body>
+</html>
