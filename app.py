@@ -52,6 +52,7 @@ def getSimilarText(inquiry):
     for index in alist[0]:
         data_sets_final.append(data_sets[index-1])
 
+    data_sets_final = sorted(data_sets_final, key=lambda k: k['similarity'], reverse=True) 
     #print(data_sets_final)
     conn.close()
     #return json.dumps(data_set, default=date_handler);
