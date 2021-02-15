@@ -25,35 +25,43 @@ def getSimilarText(inquiry):
     sql = "select distinct itsm_ref, itsm_summary, itsm_description from itsm_master where match(itsm_summary, itsm_description) against ('" + inquiry + "') AND itsm_ref like 'HSD%' limit 50"
     curs.execute(sql)
     rows = curs.fetchall()
+    result_rows = len(rows)
 
     data_sets = []
     data_sets_final = []
     descriptions = [inquiry]
     rank = []
-
-    for row in rows:
-        data_set = {"itsm_ref": row[0], "itsm_summary": row[1], "itsm_description": row[2]}
-        data_sets.append(data_set)
-        descriptions.append(cleanText(row[2]))
     
-    #print(descriptions)
-    sin_result = calcuate_Similarity(descriptions)
-    
-    for i in range(len(sin_result[0])):
-        #print(sin_result[0][i])
-        if i>0:
-            data_sets[i-1]['similarity'] = sin_result[0][i]
-        temp_data_set = {"seq": i, "weight": sin_result[0][i]}
-        rank.append(temp_data_set)
+    if result_rows > 0 :
+        
+        for row in rows:
+            data_set = {"itsm_ref": row[0], "itsm_summary": row[1], "itsm_description": row[2]}
+            data_sets.append(data_set)
+            descriptions.append(cleanText(row[2]))
 
-    #print(rank)
-    alist = np.where(sin_result[0] > 0)
+        #print(descriptions)
+        sin_result = calcuate_Similarity(descriptions)
 
-    for index in alist[0]:
-        data_sets_final.append(data_sets[index-1])
+        for i in range(len(sin_result[0])):
+            #print(sin_result[0][i])
+            if i>0:
+                data_sets[i-1]['similarity'] = sin_result[0][i]
+            temp_data_set = {"seq": i, "weight": sin_result[0][i]}
+            rank.append(temp_data_set)
 
-    data_sets_final = sorted(data_sets_final, key=lambda k: k['similarity'], reverse=True) 
-    #print(data_sets_final)
+        #print(rank)
+        alist = np.where(sin_result[0] > 0)
+
+        for index in alist[0]:
+            data_sets_final.append(data_sets[index-1])
+
+        data_sets_final = sorted(data_sets_final, key=lambda k: k['similarity'], reverse=True) 
+        #print(data_sets_final)
+        
+    else :
+        data_sets_final.append('Nodata')     
+        #data_sets_final = [ {"itsm_ref": row[0], "itsm_summary": row[1], "itsm_description": row[2]} ]
+        
     conn.close()
     #return json.dumps(data_set, default=date_handler);
     #return json.dumps(rows, default=date_handler);
